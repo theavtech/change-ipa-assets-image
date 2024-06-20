@@ -1,0 +1,23 @@
+{
+  "name": "changeappicon",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "adm-zip": "^0.5.14",
+    "ipfs-car": "^1.2.0",
+    "readline-sync": "^1.4.10",
+    "sharp": "^0.33.4"
+  },
+  "devDependencies": {
+    "@types/adm-zip": "^0.5.5",
+    "@types/readline-sync": "^1.4.8"
+  }
+}
