@@ -4,67 +4,74 @@ import sharp from 'sharp';
 import os from 'os';
 import { execSync } from "child_process";
 
+async function addDot(imagePath, savePath, dotRadius = 10) {
+    try {
+
+        extract
+        const image = sharp(imagePath);
+        const metadata = await image.metadata();
+        const imageWidth = metadata.width;
+        const imageHeight = metadata.height;
+        const centerX = Math.floor(imageWidth / 2);
+        const centerY = Math.floor(imageHeight / 2);
+        const centerPixel = await image.extract({ left: centerX, top: centerY, width: 1, height: 1 }).raw().toBuffer();
+        const [r, g, b] = centerPixel;
+
+
+        if (r == 0 && g == 0 && b == 0) {
+            await sharp(imagePath)
+                .composite([
+                    { input: './src/white.png', gravity: "center" }
+                ])
+                .toFile(savePath);
+        } else {
+            await sharp(imagePath)
+                .composite([
+                    { input: './src/black.png', gravity: "center" }
+                ])
+                .toFile(savePath);
+        }
+
+
+
+        console.log(`Dot added to image and ${imageWidth} / ${imageHeight} saved to:`, savePath);
+    } catch (error) {
+        console.error('Error adding dot:', error);
+    }
+}
+
+
 // Function to change the saturation of images in a folder
-export async function changeSaturationOfImages(inputDir, saturation = 100) {
+export async function addDotIntoImages(inputDir) {
     if (!fs.existsSync(inputDir)) {
         console.error(`Input directory "${inputDir}" does not exist.`);
         return;
     }
 
-    const files = fs.readdirSync(inputDir);
-    const imageFiles = files.filter(file => /\.(jpg|jpeg|png|gif)$/i.test(file));
-
-    if (imageFiles.length === 0) {
-        console.log('No image files found in the directory.');
-        return;
-    }
-
-    for (const file of imageFiles) {
-        const inputFilePath = path.join(inputDir, file);
-        const tempFilePath = path.join(os.tmpdir(), file); // Temporary file path
-
-        try {
-            execSync("xcrun -sdk iphoneos pngcrush -revert-iphone-optimizations " + inputFilePath + " " + tempFilePath)
-            await sharp(tempFilePath)
-                .modulate({ saturation })
-                .toFile(inputFilePath);  // Save to temporary file
-
-            // Replace original file with the processed temporary file
-            // fs.copyFileSync(tempFilePath, inputFilePath);
-            fs.unlinkSync(tempFilePath);  // Remove the temporary file
-            console.log(`Processed ${file} with saturation ${saturation}`);
-        } catch (error) {
-            console.error(`Error processing ${file}:`, error);
-        }
-    }
-
-    console.log('Saturation adjustment complete.');
-}
-
-
-// Function to adjust image saturation in a directory
-const adjustImageSaturation = async (dir, saturationFactor) => {
-    const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif'];
+    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif'];
 
     const traverseDirectory = async (currentPath) => {
         const files = await fs.promises.readdir(currentPath);
         for (const file of files) {
             const fullPath = path.join(currentPath, file);
-            if ((await fs.promises.stat(fullPath)).isDirectory()) {
+            const stat = await fs.promises.stat(fullPath);
+
+            if (stat.isDirectory()) {
                 await traverseDirectory(fullPath);
             } else if (imageExtensions.includes(path.extname(file).toLowerCase())) {
-                let tempFilename = file.split('.')[0] + "tem." + file.split('.')[1];
-                let oldFilename = file;
-                execSync("xcrun -sdk iphoneos pngcrush -revert-iphone-optimizations " + path.join(currentPath, oldFilename) + " " + path.join(currentPath, tempFilename))
-                fs.unlinkSync(path.join(currentPath, oldFilename));
-                // Adjust image saturation]
-                await sharp(path.join(currentPath, tempFilename))
-                    .modulate({ saturation: saturationFactor })
-                    .toFile(fullPath);
-                fs.unlinkSync(path.join(currentPath, tempFilename))
+                const tempFilePath = path.join(os.tmpdir(), file); // Temporary file path
+
+                try {
+                    execSync(`xcrun -sdk iphoneos pngcrush -revert-iphone-optimizations "${fullPath}" "${tempFilePath}"`);
+                    // await addDotToCenter(tempFilePath, fullPath);
+                    await addDot(tempFilePath, fullPath)
+                } catch (error) {
+                    console.error(`Error processing ${file}:`, error);
+                }
             }
         }
     };
 
-    await traverseDirectory(dir);
-};
+    await traverseDirectory(inputDir);
+    console.log('Saturation adjustment complete.');
+}
