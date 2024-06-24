@@ -6,8 +6,6 @@ import { execSync } from "child_process";
 
 async function addDot(imagePath, savePath, dotRadius = 10) {
     try {
-
-        extract
         const image = sharp(imagePath);
         const metadata = await image.metadata();
         const imageWidth = metadata.width;
@@ -73,5 +71,5 @@ export async function addDotIntoImages(inputDir) {
     };
 
     await traverseDirectory(inputDir);
-    console.log('Saturation adjustment complete.');
+    console.log('add dot complete.');
 }
